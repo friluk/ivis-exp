@@ -8,10 +8,10 @@
 	"buffers":
 	[
 		{
-			"file": "/home/nils/repositories/twitteroauth/config-sample.php",
+			"file": "/home/nils/repositories/twitteroauth/redirect.php",
 			"settings":
 			{
-				"buffer_size": 240,
+				"buffer_size": 954,
 				"line_ending": "Unix"
 			}
 		}
@@ -108,11 +108,11 @@
 			[
 				{
 					"buffer": 0,
-					"file": "/home/nils/repositories/twitteroauth/config-sample.php",
+					"file": "/home/nils/repositories/twitteroauth/redirect.php",
 					"semi_transient": true,
 					"settings":
 					{
-						"buffer_size": 240,
+						"buffer_size": 954,
 						"regions":
 						{
 						},
