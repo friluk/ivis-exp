@@ -13,7 +13,8 @@
     <div>
       <h2>Welcome to a Twitter OAuth PHP example.</h2>
 
-      <p>This site is a basic showcase of Twitters OAuth authentication method. If you are having issues try <a href='./clearsessions.php'>clearing your session</a>.</p>
+      <p>This site is a basic showcase of Twitters OAuth authentication method. If you are having issues try 
+      <a href='./clearsessions.php'>clearing your session</a>.</p>
 
       <p>
         Links:
@@ -22,13 +23,23 @@
         Contact @<a href='http://twitter.com/abraham'>abraham</a>
       </p>
       <hr />
-      <?php if (isset($menu)) { ?>
-        <?php echo $menu; ?>
-      <?php } ?>
+      <?php 
+
+      if (isset($menu)) {
+          echo $menu;
+      }
+
+      ?>
     </div>
-    <?php if (isset($status_text)) { ?>
-      <?php echo '<h3>'.$status_text.'</h3>'; ?>
-    <?php } ?>
+    
+    <?php 
+
+    if (isset($status_text)) {
+        echo '<h3>'.$status_text.'</h3>';
+    }
+
+    ?>
+    
     <p>
       <pre>
         <?php print_r($content); ?>
