@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Processing.js Test</title>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+  <!-- Latest compiled and minified JS -->
+  <script src="//code.jquery.com/jquery.js"></script>
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+  <script src="assets/js/processing-js/processing-1.4.1.js"></script>
+  <style>
+    .sketch{
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <script type="text/processing">
+
+      boolean inEllipse = false;
+      int startSize = 20;
+      int currentSize = startSize;
+      int maxSize = startSize * 2;
+      
+      void setup() {
+        size(800, 480);
+        stroke(0);
+        fill(0);
+      }
+
+      void draw() {
+        inEllipse = false;
+        background(#EEEEEE);
+        fill(#CC0000);
+        stroke(#333333);
+        strokeWeight(2);
+
+        int x = width/2;
+        int y = height/2;
+
+        int d = dist(x,y, mouseX, mouseY);
+        int r = currentSize/2;
+
+        if(d < r) {
+          inEllipse = true;
+        }
+        else {
+          inEllipse = false;
+        }
+
+        if(inEllipse) {
+          currentSize = maxSize;
+        }
+        else {
+          inEllipse = false;
+          currentSize = startSize;
+        }
+
+        ellipse(x,y, currentSize, currentSize);
+      }
+    </script>
+    <canvas class="sketch" style="border: 1px solid black;"></canvas>
+</body>
+</html>
