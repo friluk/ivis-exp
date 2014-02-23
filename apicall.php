@@ -25,9 +25,10 @@ $connection = new TwitterOAuth(
 $content = '';
 
 if (isset($_GET['method']) && isset($_GET['call'])) {
+    $switch = strtolower($_GET['call' ]);
     if (strtolower($_GET['method']) == 'get') {
-        switch (strtolower($_GET['call' ])) {
-            case 'mentions':
+        switch ($switch) {
+            case 'mentions_timeline':
                 $content = $connection->get('statuses/mentions_timeline');
                 break;
 
@@ -35,12 +36,21 @@ if (isset($_GET['method']) && isset($_GET['call'])) {
                 $content = $connection->get('statuses/user_timeline');
                 break;
 
-            case 'user_timeline':
+            case 'home_timeline':
                 $content = $connection->get('statuses/home_timeline');
                 break;
 
-            case 'user_timeline':
+            case 'retweets_of_me':
                 $content = $connection->get('statuses/retweets_of_me');
+                break;
+
+            case 'retweets':
+                if (isset($_GET['id'])) {
+                    $content = $connection->get('statuses/retweets/'.$_GET['id']);
+                } else {
+                    $content = array('error', 'id was empty or '.$_GET['id']);
+                }
+
                 break;
 
             default:

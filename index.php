@@ -25,6 +25,7 @@
       .boolean {
         color: red;
       }
+
     </style>
   </head>
   <body>
@@ -39,10 +40,24 @@
               <p><a href="twitteroauth/clearsessions.php" class="btn btn-primary">Connect/Reconnect</a></p>
               <h3>Timelines</h3>
               <div class="list-group timelines">
-                <a href="apicall.php?method=get&amp;call=mentions" class="list-group-item apilink">mentions</a>
-                <a href="apicall.php?method=get&amp;call=user_timeline" class="list-group-item apilink">user timeline</a>
-                <a href="apicall.php?method=get&amp;call=home_timeline" class="list-group-item apilink">home timeline</a>
-                <a href="apicall.php?method=get&amp;call=retweets" class="list-group-item apilink">retweets</a>
+                <a href="apicall.php?method=get&amp;call=mentions_timeline" data-proc-name="mentionsTimeline" class="list-group-item apilink">mentions</a>
+                <a href="apicall.php?method=get&amp;call=user_timeline" data-proc-name="userTimeline" class="list-group-item apilink">user timeline</a>
+                <a href="apicall.php?method=get&amp;call=home_timeline" data-proc-name="homeTimeline" class="list-group-item apilink">home timeline</a>
+                <a href="apicall.php?method=get&amp;call=retweets_of_me" data-proc-name="retweetsOfMe" class="list-group-item apilink">retweets</a>
+              </div>
+              <h3>Tweets</h3>
+              <div class="list-group tweets">              
+                <form action="apicall.php" method="get" class="list-group-item api-form" data-proc-name="retweets">
+                  <label class="sr-only" id="retweets">ID: </label>
+                  <div class="input-group input-group-sm" id="retweets">
+                    <input type="number" class="form-control" id="retweets" name="id" placeholder="Tweet ID">
+                    <span class="input-group-btn">
+                      <button type="submit" class="btn btn-primary">Go</button>
+                    </span>
+                  </div>
+                  <input type="hidden" name="method" value="get">
+                  <input type="hidden" name="call" value="retweets">
+                </form>
               </div>
             </div>
           </section>
@@ -50,13 +65,14 @@
         <div class="col-md-10">
           <section class="panel panel-default">
             <div class="panel-heading">
-              <h1 class="panel-title">Output</h1>
+              <h1 class="panel-title">Output (JSON)</h1>
             </div>
             <div class="panel-body">
               <div class="text-center" id="loader" style="display:none"><img src="assets/images/ajax-loader.gif" alt="Loading"></div>
               <pre id="output"></pre>
             </div>
           </section>
+          section.panel.panel-default
         </div>
       </div>
     </div>
@@ -66,6 +82,9 @@
     <!-- Bootstrap JavaScript -->
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
     <script>
+
+      ivis = {};
+
       function syntaxHighlight(json) {
         if (typeof json != 'string') {
              json = JSON.stringify(json, undefined, 2);
@@ -105,24 +124,46 @@
           loader.hide();
         }
 
+        function apicall (url, procName) {
+          $.ajax(url, {
+            success: function(data, textStatus, jqXHR){
+              ivis[procName] = data;
+              requestSuccessful(data, textStatus, jqXHR);
+            },
+            error: requestError,
+            type: 'GET',
+            dataType: 'json',
+          });
+        }
+
         function apiclick (event){
-          var $this = $(this);
+          var $this = $(this),
+              procName = $this.data('proc-name') || false;
 
           output.hide();
           loader.show();
 
-          $.ajax($this.attr('href'), {
-            success: requestSuccessful,
-            error: requestError,
-            type: 'GET',
-            dataType: 'json'
-          });
+          apicall($this.attr('href'), procName);
+
+          event.preventDefault();
+        }
+
+        function apisubmit (event) {
+          var $this = $(this),
+              formData = $this.serialize(),
+              url = $this.attr('action') + '?' + formData,
+              procName = $this.data('proc-name') || false;
+          output.hide();
+          loader.show();
+          apicall(url, procName);
 
           event.preventDefault();
         }
 
         $('body').on('click', '.apilink', apiclick);
+        $('body').on('submit', '.api-form', apisubmit);
       });
     </script>
+    <script src="assets/js/processing-js/processing-1.4.1.min.js"></script>
   </body>
 </html>
