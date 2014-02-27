@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Processing.js Test</title>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="assets/css/bootstrap/bootstrap.min.css">
+  <style>
+    .sketch{
+      display: block;
+      margin: 0 auto;
+    }
+
+    body {
+      background: #000;
+      color: #FFF;
+      font-family: Verdana, sans-serif;
+      margin-top: 100px;
+    }
+
+    .block {
+      display: block;
+    }
+  </style>
+  <!-- Latest compiled and minified JS -->
+  <!-- <script src="//code.jquery.com/jquery.js"></script> -->
+  <script src="assets/js/jQuery/jquery.min.js"></script>
+  <script src="assets/js/bootstrap/bootstrap.min.js"></script>
+
+  <script src="assets/js/processing-js/processing-1.4.1.min.js"></script>
+
+  <script>
+    var ivis = {};
+    ivis.init = function(){};
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="col-sm-8" id="proc-wrap">
+      <div class="form-group">
+        <script type="text/processing">
+          PFont idFont;
+          PFont contentFont;
+
+          boolean redrawFlag1 = false;
+          boolean redrawFlag2 = false;
+
+          void setup() {
+            size(0,0);
+            background(0);
+          }
+
+          void draw() {
+
+            if(redrawFlag1 && redrawFlag2) {
+              background(0);
+              redrawFlag1 = false;
+              redrawFlag2 = false;
+            }
+
+            noStroke();
+            ivis.init();
+          }
+
+          void drawBarChart(int data[]){
+            for (int i = 0; i < data.length; i++) {
+              float w = map(data[i], 0, max(data), 0, width - 50);
+              rect(10, (i * 25) + 5, w, 20);
+              text(data[i], w + 20, (i * 25) + 20 );
+            }
+          }
+
+          void drawInitialTweet(int radius) {
+            drawTweet(width/2, height/2, radius);
+          }
+
+          void drawInitialTweet(int radius, Object tweet) {
+            drawTweet(width/2, height/2, radius, tweet);
+          }
+
+          void drawTweet(int x, int y, int radius) {
+            
+            if(dist(mouseX, mouseY, x, y) < radius) {
+              ellipse(x, y, radius*2.5, radius*2.5);
+              redrawFlag1 = true;
+            } else {
+              ellipse(x, y, radius*2, radius*2);
+              redrawFlag2 = true;
+            }
+          }
+
+          void drawTweet(int x, int y, int radius, Object tweet) {
+            if(dist(mouseX, mouseY, x, y) < radius) {
+              ivis.showDetails(tweet);
+              ellipse(x, y, radius*2.5, radius*2.5);
+              redrawFlag1 = true;
+            } else {
+              ellipse(x, y, radius*2, radius*2);
+              ivis.dumpDetails();
+              redrawFlag2 = true;
+            }  
+          }
+        </script>
+        <canvas id="sketch" class="sketch" style="border: 1px solid black;"></canvas>
+      </div>
+      <div class="form-group text-center">
+        <button type="button" class="btn btn-primary" id="show-tweets">Show Tweets</button>
+        <button type="button" class="btn btn-primary" id="show-retweets">Show Retweets</button>
+      </div>
+    </div>
+    <div class="col-sm-4" id="details"></div>
+  </div>
+  <script>
+    $(function(){
+      ivis.processingWrapperWidth = $('#proc-wrap').width();
+      ivis.detailsSection = $('#details');
+      ivis.processingInstance = undefined;
+      ivis.awesomeData = undefined;
+      ivis.sizeSet = false;
+      ivis.detailsAppended = false;
+
+      ivis.type = 'tweet';
+
+      ivis.currentTweet = {};
+      ivis.retweets = [];
+
+      ivis.callbacks = {};
+
+      ivis.callbacks.bars = function(data, textStatus, jqXHR){
+        ivis.awesomeData = data.split(",");
+        ivis.processingInstance.drawBarChart(ivis.awesomeData);
+      };
+
+      ivis.callbacks.tweet = function(data, textStatus, jqXHR) {
+        ivis.currentTweet = data[0];
+        ivis.processingInstance.drawInitialTweet(10, ivis.currentTweet);
+      };
+
+      ivis.init = function (){
+
+        var callback = ivis.callbacks[ivis.type];
+
+        if(!ivis.processingInstance){
+            //create instance from Processing object
+            ivis.processingInstance = Processing.getInstanceById('sketch');
+        }
+
+        if(!ivis.sizeSet) {
+          ivis.processingInstance.size(ivis.processingWrapperWidth, 400);
+          ivis.sizeSet = true;
+        }
+
+        if(ivis.type == 'bars') {
+          ivis.getData('data.txt', callback);
+        }
+
+        if(ivis.type == 'tweet') {
+          ivis.getData('tweets.json', callback);
+        }
+      };
+
+      ivis.getData = function(url, callback){
+        if(!ivis.awesomeData) {
+          var jqXHR = $.get(url, '', callback);
+        }
+      };
+
+      ivis.showDetails = function(tweet){
+        if(!ivis.detailsAppended) {
+          ivis.dumpDetails();
+          ivis.detailsSection.append('<h3 class="text-center form-group">Tweet</h3>');
+          ivis.detailsSection.append('<div class="row form-group"><span class="col-sm-3 text-right">ID:</span><span class="col-sm-9">' + tweet.id_str + '</span></div>');
+          ivis.detailsSection.append('<div class="row form-group"><span class="col-sm-3 text-right">Author:</span><span class="col-sm-9">' + tweet.user.name + ' (@' + tweet.user.screen_name + ')' + '</span>');
+          ivis.detailsSection.append('<div class="row form-group"><span class="col-sm-3 text-right">Text:</span><span class="col-sm-9">' + tweet.text + '</span>');
+          ivis.detailsAppended = true;
+        }
+      };
+
+      ivis.dumpDetails = function() {
+        ivis.detailsSection.empty();
+      };
+
+      $('body').on('click', '#show-tweets', function(e){
+        ivis.type = 'tweet';
+        ivis.detailsAppended = false;
+        e.preventDefault();
+      });
+      $(window).on('resize', function(e) {
+        ivis.sizeSet = false;
+        ivis.processingWrapperWidth = $('#proc-wrap').width();
+      });
+    });
+  </script>
+</body>
+</html>
