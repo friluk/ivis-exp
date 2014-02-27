@@ -27,6 +27,7 @@
       }
 
     </style>
+    <script src="assets/js/processing-js/processing-1.4.1.min.js"></script>
   </head>
   <body>
     <div class="container container-main">      
@@ -63,16 +64,34 @@
           </section>
         </div>
         <div class="col-md-10">
-          <section class="panel panel-default">
-            <div class="panel-heading">
-              <h1 class="panel-title">Output (JSON)</h1>
-            </div>
-            <div class="panel-body">
-              <div class="text-center" id="loader" style="display:none"><img src="assets/images/ajax-loader.gif" alt="Loading"></div>
-              <pre id="output"></pre>
-            </div>
-          </section>
-          section.panel.panel-default
+          <div class="panel-group" id="output-group">
+            <section class="panel panel-default">
+              <div class="panel-heading">
+                <h1 class="panel-title">
+                  <a href="#json-output-wrapper" data-toggle="collapse" data-parent="#output-group">Output (JSON)</a>
+                </h1>
+              </div>
+              <div class="panel-collapse collapse in" id="json-output-wrapper">
+                <div class="panel-body">
+                  <div class="text-center" id="loader" style="display:none"><img src="assets/images/ajax-loader.gif" alt="Loading"></div>
+                  <pre id="output"></pre>
+                </div>
+              </div>
+            </section>
+            <section class="panel panel-default">
+              <div class="panel-heading">
+                <h1 class="panel-title">
+                  <a href="#proc-output-wrapper" data-toggle="collapse" data-parent="#output-group">Output (Processing)</a>
+                </h1>
+              </div>
+              <div class="panel-collapse collapse" id="proc-output-wrapper">
+                <div class="panel-body">
+                    <canvas id="processing-output"data-processing-sources="assets/processing/test.pde"></canvas>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
     </div>
@@ -128,6 +147,7 @@
           $.ajax(url, {
             success: function(data, textStatus, jqXHR){
               ivis[procName] = data;
+              ivis.currentProcName = procName;
               requestSuccessful(data, textStatus, jqXHR);
             },
             error: requestError,
@@ -164,6 +184,5 @@
         $('body').on('submit', '.api-form', apisubmit);
       });
     </script>
-    <script src="assets/js/processing-js/processing-1.4.1.min.js"></script>
   </body>
 </html>

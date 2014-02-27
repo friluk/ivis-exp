@@ -43,12 +43,19 @@
           PFont idFont;
           PFont contentFont;
 
-          boolean redrawFlag1 = false;
-          boolean redrawFlag2 = false;
+          boolean redrawFlag1;
+          boolean redrawFlag2;
+
+          boolean[] details;
 
           void setup() {
             size(0,0);
             background(0);
+
+            redrawFlag1 = false;
+            redrawFlag2 = false;
+
+            details = new boolean[0];
           }
 
           void draw() {
@@ -58,9 +65,21 @@
               redrawFlag1 = false;
               redrawFlag2 = false;
             }
-
-            noStroke();
+            
+            noStroke();            
             ivis.init();
+
+            fill(#55ACEE);
+            smooth(4);
+
+            if(details.length < ivis.tweets.length) {
+              console.log('update array size');
+              details = new boolean[ivis.tweets.length];
+            }
+
+            for(int i = 0; i < ivis.tweets.length; i++ ) {
+              drawTweet(ivis.tweets[i].x, ivis.tweets[i].y, ivis.tweets[i].radius, ivis.tweets[i].tweet, i);
+            }
           }
 
           void drawBarChart(int data[]){
@@ -71,35 +90,22 @@
             }
           }
 
-          void drawInitialTweet(int radius) {
-            drawTweet(width/2, height/2, radius);
-          }
-
-          void drawInitialTweet(int radius, Object tweet) {
-            drawTweet(width/2, height/2, radius, tweet);
-          }
-
-          void drawTweet(int x, int y, int radius) {
-            
+          void drawTweet(int x, int y, int radius, Object tweet, int index) {
             if(dist(mouseX, mouseY, x, y) < radius) {
-              ellipse(x, y, radius*2.5, radius*2.5);
+              if(!details[index]) {
+                ivis.showDetails(tweet);
+                details[index] = true;
+              }   
+              ellipse(x, y, radius * 2.5, radius * 2.5);
               redrawFlag1 = true;
             } else {
-              ellipse(x, y, radius*2, radius*2);
+              ellipse(x, y, radius * 2, radius * 2);
+              if(details[index]) {
+                ivis.dumpDetails();
+                details[index] = false;
+              }
               redrawFlag2 = true;
             }
-          }
-
-          void drawTweet(int x, int y, int radius, Object tweet) {
-            if(dist(mouseX, mouseY, x, y) < radius) {
-              ivis.showDetails(tweet);
-              ellipse(x, y, radius*2.5, radius*2.5);
-              redrawFlag1 = true;
-            } else {
-              ellipse(x, y, radius*2, radius*2);
-              ivis.dumpDetails();
-              redrawFlag2 = true;
-            }  
           }
         </script>
         <canvas id="sketch" class="sketch" style="border: 1px solid black;"></canvas>
@@ -113,12 +119,15 @@
   </div>
   <script>
     $(function(){
+      ivis.tweets = [];
+      ivis.radius = 10;
       ivis.processingWrapperWidth = $('#proc-wrap').width();
       ivis.detailsSection = $('#details');
       ivis.processingInstance = undefined;
       ivis.awesomeData = undefined;
       ivis.sizeSet = false;
       ivis.detailsAppended = false;
+      ivis.cache = {};
 
       ivis.type = 'tweet';
 
@@ -127,19 +136,54 @@
 
       ivis.callbacks = {};
 
-      ivis.callbacks.bars = function(data, textStatus, jqXHR){
-        ivis.awesomeData = data.split(",");
-        ivis.processingInstance.drawBarChart(ivis.awesomeData);
+      ivis.callbacks.tweet = function(data, textStatus, jqXHR) {
+        ivis.cache.data = data;
+        ivis.cache.textStatus = textStatus;
+        ivis.cache.jqXHR = jqXHR;
+
+        ivis.currentTweet = data[0];
+
+        ivis.tweets.length = 0;
+        
+        ivis.tweets.push({
+          "x": ivis.processingInstance.width / 2,
+          "y": ivis.processingInstance.height / 2,
+          "radius": ivis.radius,
+          "tweet": data[0]
+        });
       };
 
-      ivis.callbacks.tweet = function(data, textStatus, jqXHR) {
-        ivis.currentTweet = data[0];
-        ivis.processingInstance.drawInitialTweet(10, ivis.currentTweet);
+      ivis.callbacks.retweets = function(data, textStatus, jqXHR){
+        ivis.cache.data = data;
+        ivis.cache.textStatus = textStatus;
+        ivis.cache.jqXHR = jqXHR;
+
+        ivis.tweets.length = 0;
+
+        ivis.tweets.push({
+          "x": ivis.processingInstance.width / 2,
+          "y": ivis.processingInstance.height / 2,
+          "radius": ivis.radius,
+          "tweet": ivis.currentTweet
+        });
+
+        for(var i=0;i<data.length;i++)
+        {
+          var x = (150 * Math.sin((2 * Math.PI) / data.length * i)) + (ivis.processingInstance.width / 2);
+          var y = (150 * Math.cos((2 * Math.PI) / data.length * i)) + (ivis.processingInstance.height / 2);
+          
+          ivis.tweets.push({
+            "x": x,
+            "y": y,
+            "radius": ivis.radius,
+            "tweet": data[i]
+          });
+        }
       };
 
       ivis.init = function (){
 
-        var callback = ivis.callbacks[ivis.type];
+        var callback = ivis.callbacks[ivis.type] || function(){};
 
         if(!ivis.processingInstance){
             //create instance from Processing object
@@ -158,23 +202,31 @@
         if(ivis.type == 'tweet') {
           ivis.getData('tweets.json', callback);
         }
+
+        if(ivis.type == 'retweets') {
+          ivis.getData('retweets.json', callback);
+        }
       };
 
       ivis.getData = function(url, callback){
-        if(!ivis.awesomeData) {
-          var jqXHR = $.get(url, '', callback);
+        if(!ivis.cache.data) {
+          $.ajax({
+            url: url,
+            success: callback,
+            error: function(jqXHR, textStatus, errorThrown) {
+              console.log('ivis.type: ' + ivis.type + '; text status: ' + textStatus + '; error thrown: ' + errorThrown);
+            }
+          });
+        } else {
+          callback(ivis.cache.data, ivis.cache.textStatus, ivis.cache.jqXHR);
         }
       };
 
       ivis.showDetails = function(tweet){
-        if(!ivis.detailsAppended) {
-          ivis.dumpDetails();
-          ivis.detailsSection.append('<h3 class="text-center form-group">Tweet</h3>');
-          ivis.detailsSection.append('<div class="row form-group"><span class="col-sm-3 text-right">ID:</span><span class="col-sm-9">' + tweet.id_str + '</span></div>');
-          ivis.detailsSection.append('<div class="row form-group"><span class="col-sm-3 text-right">Author:</span><span class="col-sm-9">' + tweet.user.name + ' (@' + tweet.user.screen_name + ')' + '</span>');
-          ivis.detailsSection.append('<div class="row form-group"><span class="col-sm-3 text-right">Text:</span><span class="col-sm-9">' + tweet.text + '</span>');
-          ivis.detailsAppended = true;
-        }
+        ivis.detailsSection.append('<h3 class="text-center form-group">Tweet</h3>');
+        ivis.detailsSection.append('<div class="row form-group"><span class="col-sm-3 text-right">ID:</span><span class="col-sm-9">' + tweet.id_str + '</span></div>');
+        ivis.detailsSection.append('<div class="row form-group"><span class="col-sm-3 text-right">Author:</span><span class="col-sm-9">' + tweet.user.name + ' (@' + tweet.user.screen_name + ')' + '</span>');
+        ivis.detailsSection.append('<div class="row form-group"><span class="col-sm-3 text-right">Text:</span><span class="col-sm-9">' + tweet.text + '</span>');
       };
 
       ivis.dumpDetails = function() {
@@ -182,10 +234,17 @@
       };
 
       $('body').on('click', '#show-tweets', function(e){
+        ivis.cache = {};
         ivis.type = 'tweet';
-        ivis.detailsAppended = false;
         e.preventDefault();
       });
+
+      $('body').on('click', '#show-retweets', function(e){
+        ivis.cache = {};
+        ivis.type = 'retweets';
+        e.preventDefault();
+      });
+
       $(window).on('resize', function(e) {
         ivis.sizeSet = false;
         ivis.processingWrapperWidth = $('#proc-wrap').width();
