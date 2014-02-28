@@ -50,18 +50,18 @@
     }
  
   function getUserInfo() {
-        FB.api('/me', function(response) {
- 
-      var str="<b>Name</b> : "+response.name+"<br>";
+        FB.api('/me', function(response){
+            var str="<b>Name</b> : "+response.name+"<br>";
           str +="<b>Link: </b>"+response.link+"<br>";
-          str +="<b>Username:</b> "+response.username+"<br>";
           str +="<b>id: </b>"+response.id+"<br>";
           str +="<b>Email:</b> "+response.email+"<br>";
-          str +="<input type='button' value='Get Photo' onclick='getPhoto();'/>";
-          str +="<input type='button' value='Logout' onclick='Logout();'/>";
+          str +="<input type='button' value='Get Photo' onclick='getPhoto();'/> <br>";
+          str +="<input type='button' value='My Likes' onclick='getLikes();'/> <br>";
+          str +="<input type='button' value='My Friends likes' onclick='getFlikes();'/> <br>";
+          str +="<input type='button' value='Logout' onclick='Logout();'/> <br><br>";
           document.getElementById("status").innerHTML=str;
- 
-    });
+            
+                });
     }
     function getPhoto()
     {
@@ -73,6 +73,35 @@
     });
  
     }
+    
+    function getLikes()
+    {
+        var str = 0;
+      FB.api('/me/likes', function(response) {
+          console.log(response);
+          for (var i=0; i<response.data.length; i++)
+        {
+            str+=response.data[i].name+"<br>";
+        }
+         document.getElementById("status").innerHTML+=str;
+    });
+ 
+    }
+    
+    function getFlikes()
+    {
+        var str = 0;
+      FB.api('/me/Friends/likes', function(response) {
+          console.log(response);
+          for (var i=0; i<response.data.length; i++)
+        {
+            str+=response.data[i].name+"<br>";
+        }
+         document.getElementById("status").innerHTML+=str;
+    });
+ 
+    }
+    
     function Logout()
     {
         FB.logout(function(){document.location.reload();});
@@ -91,13 +120,15 @@
 <div align="center">
 <h2>Facebook OAuth Javascript Demo</h2>
  
-<div id="status">
-<img src="http://hayageek.com/examples/oauth/facebook/oauth-javascript/LoginWithFacebook.png" style="cursor:pointer;" onclick="Login()"/>
+<div id="status" style="text-align:left; margin-left:350px; margin-right:250px">
+<img src="http://friluk.kd.io/ivis-exp/facebookOauth/images/LoginWithFacebook.png" style="cursor:pointer;" onclick="Login()"/>
 </div>
+
+<div id="status">
  
 <br/><br/><br/><br/><br/>
  
-<div id="message">
+<div id="message" align="center">
 Logs:<br/>
 </div>
  
